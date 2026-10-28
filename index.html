@@ -11,7 +11,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <!-- VISTA 1: MURO DE REGISTRO -->
+    <!-- VISTA 1: MURO DE REGISTRO BLINDADO -->
     <div id="view-auth" class="fixed inset-0 bg-slate-50 z-50 flex items-center justify-center p-4">
         <div class="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center space-y-6">
             <div class="inline-flex p-3 bg-indigo-50 text-indigo-600 rounded-2xl text-2xl">
@@ -62,7 +62,7 @@
                     
                     <div id="loading-ai" class="hidden mb-4 p-3 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-medium flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-spinner fa-spin"></i>
-                        <span>La IA está analizando tu prenda...</span>
+                        <span>La IA está optimizando y analizando tu prenda...</span>
                     </div>
 
                     <input type="file" id="item-image" accept="image/*" onchange="processImageWithAI(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
@@ -97,7 +97,13 @@
         const SUPABASE_URL = 'https://tvskndfcdwzpguikmlty.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2c2tuZGZjZHd6cGd1aWttbHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzg2ODksImV4cCI6MjA1NjgxNDY4OX0.e4K3z8s7l4m9n2p1q0r5t6v8w7x6y5z4a3b2c1d0e9f';
 
-        let wardrobe = JSON.parse(localStorage.getItem('smart_wardrobe') || '[]');
+        let wardrobe = [];
+        try {
+            wardrobe = JSON.parse(localStorage.getItem('smart_wardrobe') || '[]');
+        } catch (e) {
+            wardrobe = [];
+        }
+
         let currentOccasion = 'casual';
         let aiModel = null;
 
@@ -110,12 +116,11 @@
         }
         loadAI();
 
-        // Comprobación inicial de sesión al cargar
         window.addEventListener('DOMContentLoaded', () => {
             const savedEmail = localStorage.getItem('smart_user_email');
             if (savedEmail) {
-                document.getElementById('view-auth').classList.add('hidden');
-                document.getElementById('view-app').classList.remove('hidden');
+                document.getElementById('view-auth').style.display = 'none';
+                document.getElementById('view-app').style.display = 'flex';
                 document.getElementById('display-user-email').innerText = savedEmail;
                 renderWardrobe();
             }
@@ -130,14 +135,12 @@
                 return;
             }
 
-            // 1. Guardar de forma local y cambiar vistas usando clases Tailwind de forma segura
             localStorage.setItem('smart_user_email', emailInput);
-            document.getElementById('view-auth').classList.add('hidden');
-            document.getElementById('view-app').classList.remove('hidden');
+            document.getElementById('view-auth').style.display = 'none';
+            document.getElementById('view-app').style.display = 'flex';
             document.getElementById('display-user-email').innerText = emailInput;
             renderWardrobe();
 
-            // 2. Enviar a Supabase mediante fetch en segundo plano aislado
             try {
                 fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
                     method: 'POST',
@@ -173,6 +176,44 @@
             }
         }
 
+        // Función para comprimir imágenes antes de procesarlas y evitar que la memoria colapse
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600;
+                    const MAX_HEIGHT = 600;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Comprimir a JPEG con calidad 0.7 para reducir el peso drásticamente
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    callback(compressedDataUrl);
+                }
+            }
+        }
+
         async function processImageWithAI(e) {
             const file = e.target.files[0];
             if(!file) return;
@@ -180,9 +221,7 @@
             const loadingDiv = document.getElementById('loading-ai');
             loadingDiv.classList.remove('hidden');
 
-            const reader = new FileReader();
-            reader.onload = async function(uploadEvent) {
-                const imageSrc = uploadEvent.target.result;
+            compressImage(file, async function(imageSrc) {
                 const imgElement = new Image();
                 imgElement.src = imageSrc;
                 imgElement.onload = async function() {
@@ -223,13 +262,19 @@
                     };
 
                     wardrobe.push(newItem);
-                    localStorage.setItem('smart_wardrobe', JSON.stringify(wardrobe));
+                    
+                    try {
+                        localStorage.setItem('smart_wardrobe', JSON.stringify(wardrobe));
+                    } catch (storageErr) {
+                        alert('El almacenamiento del navegador está lleno. Borra alguna prenda.');
+                        wardrobe.pop();
+                    }
+
                     loadingDiv.classList.add('hidden');
                     document.getElementById('item-image').value = '';
                     renderWardrobe();
                 };
-            };
-            reader.readAsDataURL(file);
+            });
         }
 
         function deleteItem(id) {
