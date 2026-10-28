@@ -58,14 +58,14 @@
             <div id="section-wardrobe" class="space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center max-w-lg mx-auto">
                     <h2 class="font-bold text-slate-800 text-sm mb-2"><i class="fa-solid fa-brain text-indigo-600 mr-1"></i> Añadir Prenda con IA</h2>
-                    <p class="text-xs text-slate-500 mb-4">Sube una foto y la inteligencia artificial organizará tu prenda sola.</p>
+                    <p class="text-xs text-slate-500 mb-4">Sube una o varias fotos a la vez y la inteligencia artificial las organizará.</p>
                     
                     <div id="loading-ai" class="hidden mb-4 p-3 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-medium flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-spinner fa-spin"></i>
-                        <span>La IA está optimizando y analizando tu prenda...</span>
+                        <span id="loading-text">La IA está optimizando y analizando tus prendas...</span>
                     </div>
 
-                    <input type="file" id="item-image" accept="image/*" onchange="processImageWithAI(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                    <input type="file" id="item-image" accept="image/*" multiple onchange="processImagesWithAI(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
                 </div>
 
                 <div id="wardrobe-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4"></div>
@@ -176,7 +176,6 @@
             }
         }
 
-        // Función para comprimir imágenes antes de procesarlas y evitar que la memoria colapse
         function compressImage(file, callback) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -185,8 +184,8 @@
                 img.src = event.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600;
-                    const MAX_HEIGHT = 600;
+                    const MAX_WIDTH = 500;
+                    const MAX_HEIGHT = 500;
                     let width = img.width;
                     let height = img.height;
 
@@ -207,74 +206,79 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Comprimir a JPEG con calidad 0.7 para reducir el peso drásticamente
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
                     callback(compressedDataUrl);
                 }
             }
         }
 
-        async function processImageWithAI(e) {
-            const file = e.target.files[0];
-            if(!file) return;
+        async function processImagesWithAI(e) {
+            const files = e.target.files;
+            if(!files || files.length === 0) return;
 
             const loadingDiv = document.getElementById('loading-ai');
+            const loadingText = document.getElementById('loading-text');
             loadingDiv.classList.remove('hidden');
 
-            compressImage(file, async function(imageSrc) {
-                const imgElement = new Image();
-                imgElement.src = imageSrc;
-                imgElement.onload = async function() {
-                    let category = 'superior';
-                    let style = 'casual';
+            for (let i = 0; i < files.length; i++) {
+                loadingText.innerText = `Procesando prenda ${i + 1} de ${files.length}...`;
+                await new Promise((resolve) => {
+                    compressImage(files[i], async function(imageSrc) {
+                        const imgElement = new Image();
+                        imgElement.src = imageSrc;
+                        imgElement.onload = async function() {
+                            let category = 'superior';
+                            let style = 'casual';
 
-                    try {
-                        if (aiModel) {
-                            const predictions = await aiModel.classify(imgElement);
-                            const textPred = predictions.map(p => p.className.toLowerCase()).join(' ');
+                            try {
+                                if (aiModel) {
+                                    const predictions = await aiModel.classify(imgElement);
+                                    const textPred = predictions.map(p => p.className.toLowerCase()).join(' ');
 
-                            if (textPred.includes('shoe') || textPred.includes('boot') || textPred.includes('sandal') || textPred.includes('sneaker') || textPred.includes('footwear')) {
-                                category = 'calzado';
-                            } else if (textPred.includes('jean') || textPred.includes('trousers') || textPred.includes('shorts') || textPred.includes('skirt') || textPred.includes('pant')) {
-                                category = 'inferior';
-                            } else if (textPred.includes('suit') || textPred.includes('gown') || textPred.includes('tie') || textPred.includes('jacket') || textPred.includes('coat')) {
-                                category = 'accesorio';
-                                style = 'formal';
-                            } else if (textPred.includes('jersey') || textPred.includes('shirt') || textPred.includes('t-shirt') || textPred.includes('blouse') || textPred.includes('cardigan')) {
-                                category = 'superior';
+                                    if (textPred.includes('shoe') || textPred.includes('boot') || textPred.includes('sandal') || textPred.includes('sneaker') || textPred.includes('footwear')) {
+                                        category = 'calzado';
+                                    } else if (textPred.includes('jean') || textPred.includes('trousers') || textPred.includes('shorts') || textPred.includes('skirt') || textPred.includes('pant')) {
+                                        category = 'inferior';
+                                    } else if (textPred.includes('suit') || textPred.includes('gown') || textPred.includes('tie') || textPred.includes('jacket') || textPred.includes('coat')) {
+                                        category = 'accesorio';
+                                        style = 'formal';
+                                    } else if (textPred.includes('jersey') || textPred.includes('shirt') || textPred.includes('t-shirt') || textPred.includes('blouse') || textPred.includes('cardigan')) {
+                                        category = 'superior';
+                                    }
+
+                                    if (textPred.includes('evening') || textPred.includes('cocktail') || textPred.includes('suit')) {
+                                        style = 'fiesta';
+                                    } else if (textPred.includes('sport') || textPred.includes('jersey') || textPred.includes('running')) {
+                                        style = 'sport';
+                                    }
+                                }
+                            } catch (err) {
+                                console.error("AI error", err);
                             }
 
-                            if (textPred.includes('evening') || textPred.includes('cocktail') || textPred.includes('suit')) {
-                                style = 'fiesta';
-                            } else if (textPred.includes('sport') || textPred.includes('jersey') || textPred.includes('running')) {
-                                style = 'sport';
+                            const newItem = {
+                                id: Date.now() + Math.random(),
+                                category,
+                                style,
+                                image: imageSrc
+                            };
+
+                            wardrobe.push(newItem);
+                            try {
+                                localStorage.setItem('smart_wardrobe', JSON.stringify(wardrobe));
+                            } catch (storageErr) {
+                                alert('El almacenamiento del navegador está lleno.');
                             }
-                        }
-                    } catch (err) {
-                        console.error("AI error", err);
-                    }
 
-                    const newItem = {
-                        id: Date.now(),
-                        category,
-                        style,
-                        image: imageSrc
-                    };
+                            resolve();
+                        };
+                    });
+                });
+            }
 
-                    wardrobe.push(newItem);
-                    
-                    try {
-                        localStorage.setItem('smart_wardrobe', JSON.stringify(wardrobe));
-                    } catch (storageErr) {
-                        alert('El almacenamiento del navegador está lleno. Borra alguna prenda.');
-                        wardrobe.pop();
-                    }
-
-                    loadingDiv.classList.add('hidden');
-                    document.getElementById('item-image').value = '';
-                    renderWardrobe();
-                };
-            });
+            loadingDiv.classList.add('hidden');
+            document.getElementById('item-image').value = '';
+            renderWardrobe();
         }
 
         function deleteItem(id) {
@@ -289,7 +293,7 @@
             grid.innerHTML = '';
 
             if(wardrobe.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-sm">Tu armario está vacío. Sube tu primera foto y la IA la organizará sola.</div>`;
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-sm">Tu armario está vacío. Sube fotos y la IA las organizará sola.</div>`;
                 return;
             }
 
