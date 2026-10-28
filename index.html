@@ -58,7 +58,7 @@
             <div id="section-wardrobe" class="space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center max-w-lg mx-auto">
                     <h2 class="font-bold text-slate-800 text-sm mb-2"><i class="fa-solid fa-brain text-indigo-600 mr-1"></i> Añadir Prenda con IA</h2>
-                    <p class="text-xs text-slate-500 mb-4">Sube una o varias fotos a la vez y la IA las guardará en tu nube.</p>
+                    <p class="text-xs text-slate-500 mb-4">Sube una o varias fotos a la vez y la IA las organizará.</p>
                     
                     <div id="loading-ai" class="hidden mb-4 p-3 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-medium flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-spinner fa-spin"></i>
@@ -80,4 +80,356 @@
                         <button onclick="generateOutfit('casual')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">Casual</button>
                         <button onclick="generateOutfit('formal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">Formal</button>
                         <button onclick="generateOutfit('sport')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">Sport</button>
-                        <button onclick="generateOutfit('fiesta')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-10
+                        <button onclick="generateOutfit('fiesta')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">Fiesta</button>
+                    </div>
+
+                    <div id="outfit-result" class="hidden border-2 border-dashed border-slate-200 rounded-2xl p-4">
+                        <h3 class="font-bold text-sm text-indigo-600 mb-3"><i class="fa-solid fa-star"></i> Tu Mix Inteligente</h3>
+                        <div id="outfit-pieces" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4"></div>
+                        <button onclick="generateOutfit(currentOccasion)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-medium transition">Probar otro mix</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://tvskndfcdwzpguikmlty.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2c2tuZGZjZHd6cGd1aWttbHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzg2ODksImV4cCI6MjA1NjgxNDY4OX0.e4K3z8s7l4m9n2p1q0r5t6v8w7x6y5z4a3b2c1d0e9f';
+
+        let wardrobe = [];
+        let currentUserEmail = '';
+        let currentOccasion = 'casual';
+        let aiModel = null;
+
+        async function loadAI() {
+            try {
+                aiModel = await mobilenet.load();
+            } catch (e) {
+                console.error("Error cargando modelo IA", e);
+            }
+        }
+        loadAI();
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const savedEmail = localStorage.getItem('smart_user_email');
+            if (savedEmail) {
+                currentUserEmail = savedEmail;
+                document.getElementById('view-auth').style.display = 'none';
+                document.getElementById('view-app').style.display = 'flex';
+                document.getElementById('display-user-email').innerText = savedEmail;
+                await fetchWardrobeFromCloud();
+            }
+        });
+
+        async function loginUser() {
+            const input = document.getElementById('user-email-input');
+            const emailInput = input ? input.value.trim() : '';
+            
+            if(!emailInput || !emailInput.includes('@')) {
+                alert('Por favor, introduce un email válido.');
+                return;
+            }
+
+            currentUserEmail = emailInput;
+            localStorage.setItem('smart_user_email', emailInput);
+            document.getElementById('view-auth').style.display = 'none';
+            document.getElementById('view-app').style.display = 'flex';
+            document.getElementById('display-user-email').innerText = emailInput;
+
+            try {
+                await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'resolution=merge-duplicates'
+                    },
+                    body: JSON.stringify({ email: emailInput })
+                });
+            } catch (e) {
+                console.error("Error registrando usuario", e);
+            }
+
+            await fetchWardrobeFromCloud();
+        }
+
+        async function fetchWardrobeFromCloud() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/prendas?email=eq.${encodeURIComponent(currentUserEmail)}`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    wardrobe = data.map(item => ({
+                        id: item.id,
+                        category: item.category,
+                        style: item.style,
+                        image: item.image_url
+                    }));
+                    renderWardrobe();
+                }
+            } catch (e) {
+                console.error("Error cargando armario de la nube", e);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('smart_user_email');
+            location.reload();
+        }
+
+        function switchTab(tab) {
+            if(tab === 'wardrobe') {
+                document.getElementById('section-wardrobe').classList.remove('hidden');
+                document.getElementById('section-generator').classList.add('hidden');
+                document.getElementById('tab-wardrobe').className = "flex-1 py-3 text-sm font-semibold text-indigo-600 border-b-2 border-indigo-600 transition";
+                document.getElementById('tab-generator').className = "flex-1 py-3 text-sm font-semibold text-slate-400 hover:text-slate-600 transition";
+            } else {
+                document.getElementById('section-wardrobe').classList.add('hidden');
+                document.getElementById('section-generator').classList.remove('hidden');
+                document.getElementById('tab-generator').className = "flex-1 py-3 text-sm font-semibold text-indigo-600 border-b-2 border-indigo-600 transition";
+                document.getElementById('tab-wardrobe').className = "flex-1 py-3 text-sm font-semibold text-slate-400 hover:text-slate-600 transition";
+            }
+        }
+
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 450;
+                    const MAX_HEIGHT = 450;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                    callback(compressedDataUrl);
+                }
+            }
+        }
+
+        async function processImagesWithAI(e) {
+            const files = e.target.files;
+            if(!files || files.length === 0) return;
+
+            const loadingDiv = document.getElementById('loading-ai');
+            const loadingText = document.getElementById('loading-text');
+            loadingDiv.classList.remove('hidden');
+
+            for (let i = 0; i < files.length; i++) {
+                loadingText.innerText = `Subiendo y analizando prenda ${i + 1} de ${files.length}...`;
+                await new Promise((resolve) => {
+                    compressImage(files[i], async function(imageSrc) {
+                        const imgElement = new Image();
+                        imgElement.src = imageSrc;
+                        imgElement.onload = async function() {
+                            let category = 'superior';
+                            let style = 'casual';
+
+                            try {
+                                if (aiModel) {
+                                    const predictions = await aiModel.classify(imgElement);
+                                    const textPred = predictions.map(p => p.className.toLowerCase()).join(' ');
+
+                                    // REGLAS CORREGIDAS Y AFINADAS PARA ROPA
+                                    if (textPred.includes('shoe') || textPred.includes('boot') || textPred.includes('sandal') || textPred.includes('sneaker') || textPred.includes('footwear') || textPred.includes('oxford')) {
+                                        category = 'calzado';
+                                    } else if (textPred.includes('jean') || textPred.includes('trousers') || textPred.includes('shorts') || textPred.includes('skirt') || textPred.includes('pant') || textPred.includes('slacks')) {
+                                        category = 'inferior';
+                                    } else if (textPred.includes('tie') || textPred.includes('bow tie') || textPred.includes('belt') || textPred.includes('scarf') || textPred.includes('necklace') || textPred.includes('sunglasses') || textPred.includes('hat')) {
+                                        category = 'accesorio';
+                                    } else if (textPred.includes('jacket') || textPred.includes('coat') || textPred.includes('cardigan') || textPred.includes('suit') || textPred.includes('blazer') || textPred.includes('jersey') || textPred.includes('shirt') || textPred.includes('t-shirt') || textPred.includes('blouse') || textPred.includes('top') || textPred.includes('sweater')) {
+                                        category = 'superior';
+                                    }
+
+                                    if (textPred.includes('evening') || textPred.includes('cocktail') || textPred.includes('suit') || textPred.includes('tie')) {
+                                        style = 'formal';
+                                    } else if (textPred.includes('sport') || textPred.includes('jersey') || textPred.includes('running') || textPred.includes('sneaker')) {
+                                        style = 'sport';
+                                    }
+                                }
+                            } catch (err) {
+                                console.error("AI error", err);
+                            }
+
+                            const newItem = {
+                                email: currentUserEmail,
+                                category: category,
+                                style: style,
+                                image_url: imageSrc
+                            };
+
+                            try {
+                                const res = await fetch(`${SUPABASE_URL}/rest/v1/prendas`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'apikey': SUPABASE_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                        'Content-Type': 'application/json',
+                                        'Prefer': 'return=representation'
+                                    },
+                                    body: JSON.stringify(newItem)
+                                });
+                                if (res.ok) {
+                                    const saved = await res.json();
+                                    wardrobe.push({
+                                        id: saved[0].id,
+                                        category,
+                                        style,
+                                        image: imageSrc
+                                    });
+                                }
+                            } catch (err) {
+                                console.error("Error guardando en nube", err);
+                            }
+
+                            resolve();
+                        };
+                    });
+                });
+            }
+
+            loadingDiv.classList.add('hidden');
+            document.getElementById('item-image').value = '';
+            renderWardrobe();
+        }
+
+        async function updateCategory(id, newCategory) {
+            const item = wardrobe.find(i => i.id == id);
+            if(item) {
+                item.category = newCategory;
+                renderWardrobe();
+                try {
+                    await fetch(`${SUPABASE_URL}/rest/v1/prendas?id=eq.${id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ category: newCategory })
+                    });
+                } catch(e) {
+                    console.error("Error actualizando categoría", e);
+                }
+            }
+        }
+
+        async function deleteItem(id) {
+            wardrobe = wardrobe.filter(item => item.id !== id);
+            renderWardrobe();
+
+            try {
+                await fetch(`${SUPABASE_URL}/rest/v1/prendas?id=eq.${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+            } catch (err) {
+                console.error("Error borrando de la nube", err);
+            }
+        }
+
+        function renderWardrobe() {
+            document.getElementById('count-items').innerText = wardrobe.length;
+            const grid = document.getElementById('wardrobe-grid');
+            grid.innerHTML = '';
+
+            if(wardrobe.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-sm">Tu armario en la nube está vacío. Sube varias fotos a la vez y se sincronizarán solas.</div>`;
+                return;
+            }
+
+            wardrobe.forEach(item => {
+                grid.innerHTML += `
+                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm relative group space-y-2">
+                        <img src="${item.image}" class="w-full h-32 object-cover rounded-lg">
+                        <div class="flex flex-col gap-1 text-xs">
+                            <select onchange="updateCategory('${item.id}', this.value)" class="w-full bg-slate-100 text-indigo-600 font-semibold py-1 px-2 rounded border border-slate-200 capitalize">
+                                <option value="superior" ${item.category === 'superior' ? 'selected' : ''}>Superior</option>
+                                <option value="inferior" ${item.category === 'inferior' ? 'selected' : ''}>Inferior</option>
+                                <option value="calzado" ${item.category === 'calzado' ? 'selected' : ''}>Calzado</option>
+                                <option value="accesorio" ${item.category === 'accesorio' ? 'selected' : ''}>Accesorio</option>
+                            </select>
+                            <span class="bg-slate-50 text-slate-500 px-1.5 py-0.5 rounded text-[10px] capitalize text-center border border-slate-100">Estilo: ${item.style}</span>
+                        </div>
+                        <button onclick="deleteItem('${item.id}')" class="absolute top-3 right-3 bg-white/80 hover:bg-red-600 hover:text-white text-slate-600 w-7 h-7 rounded-full flex items-center justify-center text-xs shadow transition"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        function generateOutfit(occasion) {
+            currentOccasion = occasion;
+            const superiors = wardrobe.filter(i => i.category === 'superior' && (i.style === occasion || i.style === 'casual'));
+            const inferiors = wardrobe.filter(i => i.category === 'inferior' && (i.style === occasion || i.style === 'casual'));
+            const shoes = wardrobe.filter(i => i.category === 'calzado');
+
+            const resultDiv = document.getElementById('outfit-result');
+            const piecesDiv = document.getElementById('outfit-pieces');
+            piecesDiv.innerHTML = '';
+
+            if(superiors.length === 0 || inferiors.length === 0) {
+                resultDiv.classList.remove('hidden');
+                piecesDiv.innerHTML = `<div class="col-span-full text-xs text-red-500">Sube más prendas (necesitas al menos una parte superior y una inferior) para que la IA arme un mix para '${occasion}'.</div>`;
+                return;
+            }
+
+            const resultSup = superiors[Math.floor(Math.random() * superiors.length)];
+            const resultInf = inferiors[Math.floor(Math.random() * inferiors.length)];
+            const resultShoe = shoes.length > 0 ? shoes[Math.floor(Math.random() * shoes.length)] : null;
+
+            let html = `
+                <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 text-center">
+                    <img src="${resultSup.image}" class="w-full h-24 object-cover rounded mb-1">
+                    <span class="text-[10px] font-medium text-slate-600">Superior</span>
+                </div>
+                <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 text-center">
+                    <img src="${resultInf.image}" class="w-full h-24 object-cover rounded mb-1">
+                    <span class="text-[10px] font-medium text-slate-600">Inferior</span>
+                </div>
+            `;
+
+            if(resultShoe) {
+                html += `
+                    <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 text-center">
+                        <img src="${resultShoe.image}" class="w-full h-24 object-cover rounded mb-1">
+                        <span class="text-[10px] font-medium text-slate-600">Calzado</span>
+                    </div>
+                `;
+            }
+
+            piecesDiv.innerHTML = html;
+            resultDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
