@@ -243,8 +243,8 @@
                     img.src = event.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 400;
-                        const MAX_HEIGHT = 400;
+                        const MAX_WIDTH = 350;
+                        const MAX_HEIGHT = 350;
                         let width = img.width;
                         let height = img.height;
 
@@ -265,7 +265,7 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        resolve(canvas.toDataURL('image/jpeg', 0.5));
+                        resolve(canvas.toDataURL('image/jpeg', 0.45));
                     }
                 }
             });
@@ -287,27 +287,31 @@
                     let style = 'casual';
 
                     if (aiModel) {
-                        const imgElement = new Image();
-                        imgElement.src = imageSrc;
-                        await new Promise((res) => { imgElement.onload = res; });
-                        
-                        const predictions = await aiModel.classify(imgElement);
-                        const textPred = predictions.map(p => p.className.toLowerCase()).join(' ');
+                        try {
+                            const imgElement = new Image();
+                            imgElement.src = imageSrc;
+                            await new Promise((res) => { imgElement.onload = res; });
+                            
+                            const predictions = await aiModel.classify(imgElement);
+                            const textPred = predictions.map(p => p.className.toLowerCase()).join(' ');
 
-                        if (textPred.includes('shoe') || textPred.includes('boot') || textPred.includes('sandal') || textPred.includes('sneaker') || textPred.includes('footwear') || textPred.includes('oxford')) {
-                            category = 'calzado';
-                        } else if (textPred.includes('jean') || textPred.includes('trousers') || textPred.includes('shorts') || textPred.includes('skirt') || textPred.includes('pant') || textPred.includes('slacks')) {
-                            category = 'inferior';
-                        } else if (textPred.includes('tie') || textPred.includes('bow tie') || textPred.includes('belt') || textPred.includes('scarf') || textPred.includes('necklace') || textPred.includes('sunglasses') || textPred.includes('hat')) {
-                            category = 'accesorio';
-                        } else if (textPred.includes('jacket') || textPred.includes('coat') || textPred.includes('cardigan') || textPred.includes('suit') || textPred.includes('blazer') || textPred.includes('jersey') || textPred.includes('shirt') || textPred.includes('t-shirt') || textPred.includes('blouse') || textPred.includes('top') || textPred.includes('sweater')) {
-                            category = 'superior';
-                        }
+                            if (textPred.includes('shoe') || textPred.includes('boot') || textPred.includes('sandal') || textPred.includes('sneaker') || textPred.includes('footwear') || textPred.includes('oxford')) {
+                                category = 'calzado';
+                            } else if (textPred.includes('jean') || textPred.includes('trousers') || textPred.includes('shorts') || textPred.includes('skirt') || textPred.includes('pant') || textPred.includes('slacks')) {
+                                category = 'inferior';
+                            } else if (textPred.includes('tie') || textPred.includes('bow tie') || textPred.includes('belt') || textPred.includes('scarf') || textPred.includes('necklace') || textPred.includes('sunglasses') || textPred.includes('hat')) {
+                                category = 'accesorio';
+                            } else if (textPred.includes('jacket') || textPred.includes('coat') || textPred.includes('cardigan') || textPred.includes('suit') || textPred.includes('blazer') || textPred.includes('jersey') || textPred.includes('shirt') || textPred.includes('t-shirt') || textPred.includes('blouse') || textPred.includes('top') || textPred.includes('sweater')) {
+                                category = 'superior';
+                            }
 
-                        if (textPred.includes('evening') || textPred.includes('cocktail') || textPred.includes('suit') || textPred.includes('tie')) {
-                            style = 'formal';
-                        } else if (textPred.includes('sport') || textPred.includes('jersey') || textPred.includes('running') || textPred.includes('sneaker')) {
-                            style = 'sport';
+                            if (textPred.includes('evening') || textPred.includes('cocktail') || textPred.includes('suit') || textPred.includes('tie')) {
+                                style = 'formal';
+                            } else if (textPred.includes('sport') || textPred.includes('jersey') || textPred.includes('running') || textPred.includes('sneaker')) {
+                                style = 'sport';
+                            }
+                        } catch (aiErr) {
+                            console.warn("Fallo menor en IA, asignando por defecto:", aiErr);
                         }
                     }
 
@@ -330,16 +334,22 @@
                     });
 
                     if (res.ok) {
-                        const saved = await res.json();
-                        wardrobe.push({
-                            id: saved[0].id,
-                            category,
-                            style,
-                            image: imageSrc
-                        });
+                        const savedData = await res.json();
+                        // Aseguramos que añadimos el elemento con el ID devuelto por Supabase
+                        const savedItem = Array.isArray(savedData) ? savedData[0] : savedData;
+                        if (savedItem && savedItem.id) {
+                            wardrobe.push({
+                                id: savedItem.id,
+                                category: savedItem.category,
+                                style: savedItem.style,
+                                image: savedItem.image_url
+                            });
+                        }
+                    } else {
+                        console.error("Error de servidor Supabase:", await res.text());
                     }
                 } catch (err) {
-                    console.error("Error procesando archivo individual", err);
+                    console.error("Error crítico procesando archivo individual", err);
                 }
             }
 
@@ -443,7 +453,6 @@
             const resultShoe = shoes.length > 0 ? shoes[Math.floor(Math.random() * shoes.length)] : null;
             const resultAcc = accessories.length > 0 ? accessories[Math.floor(Math.random() * accessories.length)] : null;
 
-            // Renderizar desglose de prendas (Izquierda)
             let piecesHtml = `
                 <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 text-center">
                     <img src="${resultSup.image}" class="w-full h-20 object-cover rounded-lg mb-1">
@@ -472,7 +481,6 @@
             }
             piecesDiv.innerHTML = piecesHtml;
 
-            // Renderizar maniquí lookbook (Derecha)
             let mannequinHtml = `
                 <div class="bg-slate-900 p-1.5 rounded-lg border border-slate-700 text-center">
                     <img src="${resultSup.image}" class="w-full h-16 object-cover rounded">
