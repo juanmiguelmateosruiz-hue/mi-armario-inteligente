@@ -30,27 +30,6 @@
                 <button type="button" onclick="loginUser()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition text-sm shadow-md cursor-pointer">Acceder a mi Armario</button>
             </div>
 
-            <div class="relative flex py-1 items-center">
-                <div class="flex-grow border-t border-slate-200"></div>
-                <span class="flex-shrink mx-4 text-slate-400 text-[11px] uppercase font-medium">O acceso rápido</span>
-                <div class="flex-grow border-t border-slate-200"></div>
-            </div>
-
-            <button type="button" onclick="triggerFaceID()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl transition text-sm shadow-md flex items-center justify-center space-x-2 cursor-pointer">
-                <i class="fa-solid fa-face-smile text-indigo-400"></i>
-                <span>Acceso con Reconocimiento Facial</span>
-            </button>
-
-            <div id="face-container" class="hidden space-y-3 pt-2">
-                <div class="relative w-full h-48 bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center border-2 border-indigo-500 shadow-inner">
-                    <video id="face-video" autoplay playsinline class="w-full h-full object-cover"></video>
-                    <div class="absolute inset-0 border-4 border-indigo-500/30 rounded-2xl pointer-events-none flex items-center justify-center">
-                        <div class="w-28 h-36 border-2 border-dashed border-indigo-400 rounded-full animate-pulse"></div>
-                    </div>
-                </div>
-                <button type="button" onclick="verifyFace()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-xl text-xs transition shadow cursor-pointer">Escanear Rostro y Entrar</button>
-            </div>
-
             <div class="text-[11px] text-slate-400 pt-3 border-t border-slate-100 flex justify-between items-center">
                 <span>Creado por <strong class="text-slate-600">Yoni Mikel</strong></span>
                 <a href="https://instagram.com/yonimikel" target="_blank" class="text-indigo-600 hover:underline flex items-center space-x-1 font-semibold">
@@ -158,13 +137,12 @@
 
     <script>
         const SUPABASE_URL = 'https://tvskndfcdwzpguikmlty.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2c2tuZGZjZHd6cGd1aWttbHR5In0.dummyKey'; // Llave pública segura proporcionada
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2c2tuZGZjZHd6cGd1aWttbHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzg2ODksImV4cCI6MjA1NjgxNDY4OX0.e4K3z8s7l4m9n2p1q0r5t6v8w7x6y5z4a3b2c1d0e9f';
 
         let wardrobe = [];
         let currentUserEmail = '';
         let currentOccasion = 'casual';
         let aiModel = null;
-        let mediaStream = null;
 
         async function loadAI() {
             try { aiModel = await mobilenet.load(); } catch (e) {}
@@ -200,35 +178,6 @@
             await fetchWardrobe();
         }
 
-        async function triggerFaceID() {
-            const container = document.getElementById('face-container');
-            container.classList.remove('hidden');
-            try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                document.getElementById('face-video').srcObject = mediaStream;
-            } catch (err) {
-                alert('No se pudo acceder a la cámara.');
-                container.classList.add('hidden');
-            }
-        }
-
-        async function verifyFace() {
-            let savedEmail = localStorage.getItem('smart_user_email');
-            if (!savedEmail) {
-                const emailPrompt = prompt('Introduce tu email para asociarlo a tu reconocimiento facial:');
-                if (!emailPrompt || !emailPrompt.includes('@')) return;
-                savedEmail = emailPrompt.trim().toLowerCase();
-                localStorage.setItem('smart_user_email', savedEmail);
-            }
-            currentUserEmail = savedEmail;
-            if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-
-            document.getElementById('view-auth').style.display = 'none';
-            document.getElementById('view-app').style.display = 'flex';
-            document.getElementById('display-user-email').innerText = currentUserEmail;
-            await fetchWardrobe();
-        }
-
         async function fetchWardrobe() {
             try {
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/prendas?email=eq.${encodeURIComponent(currentUserEmail)}`, {
@@ -245,7 +194,6 @@
         }
 
         function logout() {
-            if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
             localStorage.removeItem('smart_user_email');
             location.reload();
         }
@@ -273,13 +221,13 @@
                     img.src = e.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX = 280;
+                        const MAX = 180; // Compresión optimizada para evitar sobrecarga en Supabase
                         let w = img.width, h = img.height;
                         if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
                         else { if (h > MAX) { w *= MAX / h; h = MAX; } }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.35));
+                        resolve(canvas.toDataURL('image/jpeg', 0.25));
                     }
                 }
             });
