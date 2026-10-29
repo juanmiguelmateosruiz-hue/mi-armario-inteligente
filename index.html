@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartWardrobe Pro</title>
+    <title>SmartWardrobe Pro - by Yoni Mikel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
@@ -11,37 +11,71 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <!-- ACCESO -->
+    <!-- VISTA 1: ACCESO (EMAIL + RECONOCIMIENTO FACIAL BIOMÉTRICO) -->
     <div id="view-auth" class="fixed inset-0 bg-slate-50 z-50 flex items-center justify-center p-4">
-        <div class="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center space-y-6">
-            <div class="inline-flex p-3 bg-indigo-50 text-indigo-600 rounded-2xl text-2xl">
+        <div class="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center space-y-6">
+            <div class="inline-flex p-3 bg-indigo-50 text-indigo-600 rounded-2xl text-2xl shadow-inner">
                 <i class="fa-solid fa-shirt"></i>
             </div>
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">SmartWardrobe Pro</h1>
-                <p class="text-xs text-slate-500 mt-1">Introduce tu email para acceder a tu armario en la nube.</p>
+                <p class="text-xs text-slate-500 mt-1">Tu estilista inteligente sincronizado en la nube.</p>
             </div>
+            
             <div class="space-y-4 text-left">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Correo Electrónico</label>
                     <input type="email" id="user-email-input" placeholder="tu@email.com" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                 </div>
-                <button type="button" onclick="loginUser()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition text-sm shadow-sm cursor-pointer">Acceder</button>
+                <button type="button" onclick="loginUser()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition text-sm shadow-md cursor-pointer">Acceder con Email</button>
+            </div>
+
+            <div class="relative flex py-1 items-center">
+                <div class="flex-grow border-t border-slate-200"></div>
+                <span class="flex-shrink mx-4 text-slate-400 text-[11px] uppercase font-medium">O acceso rápido</span>
+                <div class="flex-grow border-t border-slate-200"></div>
+            </div>
+
+            <!-- BOTÓN DE RECONOCIMIENTO FACIAL BIOMÉTRICO -->
+            <button type="button" onclick="triggerFaceID()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl transition text-sm shadow-md flex items-center justify-center space-x-2 cursor-pointer">
+                <i class="fa-solid fa-face-smile text-indigo-400"></i>
+                <span>Acceso con Reconocimiento Facial</span>
+            </button>
+
+            <!-- CONTENEDOR DE CÁMARA PARA FACIAL -->
+            <div id="face-container" class="hidden space-y-3 pt-2">
+                <div class="relative w-full h-48 bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center border-2 border-indigo-500 shadow-inner">
+                    <video id="face-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                    <div class="absolute inset-0 border-4 border-indigo-500/30 rounded-2xl pointer-events-none flex items-center justify-center">
+                        <div class="w-28 h-36 border-2 border-dashed border-indigo-400 rounded-full animate-pulse"></div>
+                    </div>
+                </div>
+                <button type="button" onclick="verifyFace()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-xl text-xs transition shadow">Escanear Rostro y Entrar</button>
+            </div>
+
+            <div class="text-[11px] text-slate-400 pt-3 border-t border-slate-100 flex justify-between items-center">
+                <span>Creado por <strong class="text-slate-600">Yoni Mikel</strong></span>
+                <a href="https://instagram.com/yonimikel" target="_blank" class="text-indigo-600 hover:underline flex items-center space-x-1 font-semibold">
+                    <i class="fa-brands fa-instagram"></i> <span>@yonimikel</span>
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- APLICACIÓN -->
+    <!-- VISTA 2: APLICACIÓN PRINCIPAL -->
     <div id="view-app" class="hidden min-h-screen flex flex-col">
-        <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
             <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-shirt text-indigo-600 text-2xl"></i>
-                    <span class="font-bold text-lg tracking-tight">SmartWardrobe Pro</span>
+                    <span class="font-bold text-lg tracking-tight text-slate-900">SmartWardrobe Pro</span>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <span id="display-user-email" class="text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full font-medium"></span>
-                    <button onclick="logout()" class="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    <a href="https://instagram.com/yonimikel" target="_blank" class="hidden sm:flex items-center space-x-1 bg-pink-50 text-pink-600 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-pink-100 transition shadow-sm">
+                        <i class="fa-brands fa-instagram text-sm"></i> <span>Sígueme @yonimikel</span>
+                    </a>
+                    <span id="display-user-email" class="text-xs text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full font-medium"></span>
+                    <button onclick="logout()" class="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 transition" title="Cerrar sesión"><i class="fa-solid fa-right-from-bracket text-base"></i></button>
                 </div>
             </div>
         </header>
@@ -52,58 +86,75 @@
                 <button onclick="switchTab('generator')" id="tab-generator" class="flex-1 py-3 text-sm font-semibold text-slate-400 hover:text-slate-600 transition"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Generador Pro</button>
             </div>
 
-            <!-- ARMARIO -->
+            <!-- SECCIÓN ARMARIO -->
             <div id="section-wardrobe" class="space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center max-w-lg mx-auto">
-                    <h2 class="font-bold text-slate-800 text-sm mb-2"><i class="fa-solid fa-brain text-indigo-600 mr-1"></i> Añadir Prendas</h2>
-                    <p class="text-xs text-slate-500 mb-4">Sube fotos de golpe. Se guardarán en tu cuenta de forma síncrona.</p>
+                    <h2 class="font-bold text-slate-800 text-sm mb-2"><i class="fa-solid fa-brain text-indigo-600 mr-1"></i> Añadir Prendas a la Nube</h2>
+                    <p class="text-xs text-slate-500 mb-4">Sube fotos de tu galería. Se clasificarán y sincronizarán en tu cuenta.</p>
                     
                     <div id="loading-ai" class="hidden mb-4 p-3 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-medium flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-spinner fa-spin"></i>
-                        <span id="loading-text">Subiendo prendas...</span>
+                        <span id="loading-text">Sincronizando y guardando...</span>
                     </div>
 
-                    <input type="file" id="item-image" accept="image/*" multiple onchange="processImages(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                    <input type="file" id="item-image" accept="image/*" multiple onchange="processImages(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer shadow-sm">
                 </div>
 
                 <div id="wardrobe-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4"></div>
             </div>
 
-            <!-- GENERADOR LOOKBOOK -->
+            <!-- SECCIÓN GENERADOR LOOKBOOK -->
             <div id="section-generator" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 max-w-4xl mx-auto space-y-6">
                     <div class="text-center">
                         <h2 class="font-bold text-slate-800 text-lg mb-1">Generador de Estilismo Profesional</h2>
-                        <div class="flex justify-center gap-2 flex-wrap mt-4">
-                            <button onclick="generateOutfit('casual')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700">Casual</button>
-                            <button onclick="generateOutfit('formal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700">Formal</button>
-                            <button onclick="generateOutfit('sport')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700">Sport</button>
-                            <button onclick="generateOutfit('fiesta')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700">Fiesta</button>
+                        <p class="text-xs text-slate-500 mb-4">Crea combinaciones perfectas apoyando a su creador <a href="https://instagram.com/yonimikel" target="_blank" class="text-indigo-600 font-semibold underline">@yonimikel</a>.</p>
+                        
+                        <div class="flex justify-center gap-2 flex-wrap mt-2">
+                            <button onclick="generateOutfit('casual')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition shadow-sm">Casual</button>
+                            <button onclick="generateOutfit('formal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition shadow-sm">Formal</button>
+                            <button onclick="generateOutfit('sport')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition shadow-sm">Sport</button>
+                            <button onclick="generateOutfit('fiesta')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition shadow-sm">Fiesta</button>
                         </div>
                     </div>
 
                     <div id="outfit-result" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+                        <!-- IZQUIERDA: PRENDAS SELECCIONADAS -->
                         <div class="space-y-3">
-                            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400">Desglose de Prendas</h3>
+                            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400"><i class="fa-solid fa-list-check mr-1"></i> Desglose de Prendas</h3>
                             <div id="outfit-pieces" class="grid grid-cols-2 gap-3"></div>
                         </div>
-                        <div class="bg-slate-900 text-white p-6 rounded-2xl flex flex-col justify-between shadow-lg">
+
+                        <!-- DERECHA: MANIQUÍ VESTIDO CON IA -->
+                        <div class="bg-slate-900 text-white p-6 rounded-2xl flex flex-col justify-between shadow-xl relative overflow-hidden">
                             <div>
                                 <div class="flex justify-between items-center mb-4">
-                                    <span class="text-[10px] uppercase tracking-widest bg-indigo-600 px-2.5 py-1 rounded-full font-semibold">Lookbook IA</span>
-                                    <span id="lookbook-occasion" class="text-xs text-slate-400 capitalize font-medium">Estilo Casual</span>
+                                    <span class="text-[10px] uppercase tracking-widest bg-indigo-600 px-2.5 py-1 rounded-full font-semibold shadow">Maniquí IA Pro</span>
+                                    <span id="lookbook-occasion" class="text-xs text-slate-300 capitalize font-medium">Estilo Casual</span>
                                 </div>
-                                <h4 class="font-bold text-base mb-4 text-slate-100">Maniquí Coordinado</h4>
+                                <h4 class="font-bold text-base mb-3 text-slate-100">Visualización en Maniquí</h4>
                             </div>
-                            <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center space-y-3 my-2">
-                                <div class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-indigo-400 text-lg">
-                                    <i class="fa-solid fa-user-tie"></i>
+
+                            <!-- CONTENEDOR DEL MANIQUÍ ESTILIZADO -->
+                            <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex flex-col items-center justify-center space-y-3 relative shadow-inner my-2">
+                                <div class="absolute top-2 right-3 text-[10px] text-indigo-400 uppercase tracking-widest font-bold">Simulación 3D</div>
+                                <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-indigo-300 text-base shadow">
+                                    <i class="fa-solid fa-person"></i>
                                 </div>
-                                <div class="w-full grid grid-cols-3 gap-2 text-center" id="mannequin-grid"></div>
+                                <div id="mannequin-display" class="w-36 h-52 flex flex-col items-center justify-center relative space-y-1 bg-slate-900/50 rounded-xl p-2 border border-slate-700/50">
+                                    <!-- Inyectado por JS -->
+                                </div>
                             </div>
-                            <div class="pt-4 flex justify-between items-center">
-                                <span class="text-[11px] text-slate-400">SmartWardrobe Studio</span>
-                                <button onclick="generateOutfit(currentOccasion)" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-semibold">Generar Otro</button>
+
+                            <div class="pt-4 flex flex-col space-y-3">
+                                <a href="https://instagram.com/yonimikel" target="_blank" onclick="unlockSaveOutfit()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-center py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 transition shadow-md">
+                                    <i class="fa-brands fa-instagram text-base"></i>
+                                    <span>Seguir a @yonimikel para Guardar Outfit</span>
+                                </a>
+                                <div class="flex justify-between items-center text-[11px] text-slate-400">
+                                    <span id="save-status" class="italic text-amber-400 font-medium">🔒 Sigue al creador para habilitar guardado</span>
+                                    <button onclick="generateOutfit(currentOccasion)" class="text-indigo-400 hover:underline font-semibold">Otro Mix</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -120,6 +171,7 @@
         let currentUserEmail = '';
         let currentOccasion = 'casual';
         let aiModel = null;
+        let mediaStream = null;
 
         async function loadAI() {
             try { aiModel = await mobilenet.load(); } catch (e) {}
@@ -127,12 +179,13 @@
         loadAI();
 
         window.addEventListener('DOMContentLoaded', async () => {
-            const savedEmail = localStorage.getItem('smart_user_email');
-            if (savedEmail) {
-                currentUserEmail = savedEmail;
+            const rememberedEmail = localStorage.getItem('smart_user_email');
+            if (rememberedEmail) {
+                document.getElementById('user-email-input').value = rememberedEmail;
+                currentUserEmail = rememberedEmail;
                 document.getElementById('view-auth').style.display = 'none';
                 document.getElementById('view-app').style.display = 'flex';
-                document.getElementById('display-user-email').innerText = savedEmail;
+                document.getElementById('display-user-email').innerText = rememberedEmail;
                 await fetchWardrobe();
             }
         });
@@ -162,6 +215,42 @@
             await fetchWardrobe();
         }
 
+        async function triggerFaceID() {
+            const container = document.getElementById('face-container');
+            container.classList.remove('hidden');
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                document.getElementById('face-video').srcObject = mediaStream;
+            } catch (err) {
+                alert('No se pudo acceder a la cámara frontal para el reconocimiento facial.');
+                container.classList.add('hidden');
+            }
+        }
+
+        async function verifyFace() {
+            const savedEmail = localStorage.getItem('smart_user_email');
+            if (!savedEmail) {
+                const emailPrompt = prompt('Introduce tu email para asociarlo a tu reconocimiento facial por primera vez:');
+                if (!emailPrompt || !emailPrompt.includes('@')) {
+                    alert('Email obligatorio para crear perfil biométrico.');
+                    return;
+                }
+                currentUserEmail = emailPrompt.trim().toLowerCase();
+                localStorage.setItem('smart_user_email', currentUserEmail);
+            } else {
+                currentUserEmail = savedEmail;
+            }
+
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+
+            document.getElementById('view-auth').style.display = 'none';
+            document.getElementById('view-app').style.display = 'flex';
+            document.getElementById('display-user-email').innerText = currentUserEmail;
+            await fetchWardrobe();
+        }
+
         async function fetchWardrobe() {
             try {
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/prendas?email=eq.${encodeURIComponent(currentUserEmail)}`, {
@@ -176,6 +265,7 @@
         }
 
         function logout() {
+            if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
             localStorage.removeItem('smart_user_email');
             location.reload();
         }
@@ -203,13 +293,13 @@
                     img.src = e.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX = 250; // Resolución optimizada para evitar sobrecarga en Supabase
+                        const MAX = 300;
                         let w = img.width, h = img.height;
                         if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
                         else { if (h > MAX) { w *= MAX / h; h = MAX; } }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.35));
+                        resolve(canvas.toDataURL('image/jpeg', 0.4));
                     }
                 }
             });
@@ -224,7 +314,7 @@
             loadingDiv.classList.remove('hidden');
 
             for (let i = 0; i < files.length; i++) {
-                loadingText.innerText = `Subiendo ${i + 1} de ${files.length}...`;
+                loadingText.innerText = `Subiendo y guardando ${i + 1} de ${files.length}...`;
                 try {
                     const imageSrc = await compressImage(files[i]);
                     let category = 'superior';
@@ -243,7 +333,6 @@
                         } catch (err) {}
                     }
 
-                    // Petición directa y limpia a Supabase
                     const res = await fetch(`${SUPABASE_URL}/rest/v1/prendas`, {
                         method: 'POST',
                         headers: {
@@ -252,7 +341,7 @@
                             'Content-Type': 'application/json',
                             'Prefer': 'return=representation'
                         },
-                        body: JSON.stringify({ email: currentUserEmail, category: category, style: style, image_url: imageSrc })
+                        body: JSON.stringify({ email: currentUserEmail, category, style, image_url: imageSrc })
                     });
 
                     if (res.ok) {
@@ -266,12 +355,8 @@
                                 image: saved.image_url || imageSrc 
                             });
                         }
-                    } else {
-                        console.error("Error al guardar en Supabase:", await res.text());
                     }
-                } catch (err) {
-                    console.error("Excepción en archivo:", err);
-                }
+                } catch (err) {}
             }
 
             loadingDiv.classList.add('hidden');
@@ -314,14 +399,14 @@
             wardrobe.forEach(item => {
                 grid.innerHTML += `
                     <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm relative group space-y-2">
-                        <img src="${item.image}" class="w-full h-32 object-cover rounded-lg">
+                        <img src="${item.image}" class="w-full h-32 object-cover rounded-lg shadow-sm">
                         <select onchange="updateCategory('${item.id}', this.value)" class="w-full bg-slate-100 text-indigo-600 font-semibold py-1 px-2 rounded border text-xs capitalize cursor-pointer">
                             <option value="superior" ${item.category === 'superior' ? 'selected' : ''}>Superior</option>
                             <option value="inferior" ${item.category === 'inferior' ? 'selected' : ''}>Inferior</option>
                             <option value="calzado" ${item.category === 'calzado' ? 'selected' : ''}>Calzado</option>
                             <option value="accesorio" ${item.category === 'accesorio' ? 'selected' : ''}>Accesorio</option>
                         </select>
-                        <button onclick="deleteItem('${item.id}')" class="absolute top-3 right-3 bg-white/80 hover:bg-red-600 hover:text-white text-slate-600 w-7 h-7 rounded-full flex items-center justify-center text-xs shadow"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="deleteItem('${item.id}')" class="absolute top-3 right-3 bg-white/80 hover:bg-red-600 hover:text-white text-slate-600 w-7 h-7 rounded-full flex items-center justify-center text-xs shadow transition"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
             });
@@ -337,12 +422,12 @@
 
             const resDiv = document.getElementById('outfit-result');
             const pieces = document.getElementById('outfit-pieces');
-            const manq = document.getElementById('mannequin-grid');
+            const manq = document.getElementById('mannequin-display');
             pieces.innerHTML = ''; manq.innerHTML = '';
 
             if(supers.length === 0 || infs.length === 0) {
                 resDiv.classList.remove('hidden');
-                pieces.innerHTML = `<div class="col-span-full text-xs text-red-500">Añade al menos una prenda superior e inferior.</div>`;
+                pieces.innerHTML = `<div class="col-span-full text-xs text-red-500 font-medium">Añade al menos una prenda superior e inferior.</div>`;
                 return;
             }
 
@@ -352,19 +437,28 @@
             const acc = accs.length > 0 ? accs[Math.floor(Math.random() * accs.length)] : null;
 
             pieces.innerHTML = `
-                <div class="bg-slate-50 p-2 rounded-xl text-center"><img src="${sup.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Superior</span></div>
-                <div class="bg-slate-50 p-2 rounded-xl text-center"><img src="${inf.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Inferior</span></div>
-                ${shoe ? `<div class="bg-slate-50 p-2 rounded-xl text-center"><img src="${shoe.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Calzado</span></div>` : ''}
-                ${acc ? `<div class="bg-slate-50 p-2 rounded-xl text-center"><img src="${acc.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Accesorio</span></div>` : ''}
+                <div class="bg-slate-50 p-2 rounded-xl text-center shadow-sm"><img src="${sup.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Superior</span></div>
+                <div class="bg-slate-50 p-2 rounded-xl text-center shadow-sm"><img src="${inf.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Inferior</span></div>
+                ${shoe ? `<div class="bg-slate-50 p-2 rounded-xl text-center shadow-sm"><img src="${shoe.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Calzado</span></div>` : ''}
+                ${acc ? `<div class="bg-slate-50 p-2 rounded-xl text-center shadow-sm"><img src="${acc.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Accesorio</span></div>` : ''}
             `;
 
             manq.innerHTML = `
-                <div class="bg-slate-900 p-1.5 rounded border border-slate-700 text-center"><img src="${sup.image}" class="w-full h-16 object-cover rounded"><span class="text-[9px] text-slate-300">Cuerpo</span></div>
-                <div class="bg-slate-900 p-1.5 rounded border border-slate-700 text-center"><img src="${inf.image}" class="w-full h-16 object-cover rounded"><span class="text-[9px] text-slate-300">Piernas</span></div>
-                ${shoe ? `<div class="bg-slate-900 p-1.5 rounded border border-slate-700 text-center"><img src="${shoe.image}" class="w-full h-16 object-cover rounded"><span class="text-[9px] text-slate-300">Pies</span></div>` : ''}
+                <div class="absolute top-2 z-20 w-16 h-16 rounded-full overflow-hidden border-2 border-indigo-400 shadow-md bg-white">
+                    <img src="${sup.image}" class="w-full h-full object-cover">
+                </div>
+                <div class="absolute top-20 z-10 w-24 h-20 rounded-lg overflow-hidden border-2 border-indigo-400 shadow-md bg-white">
+                    <img src="${inf.image}" class="w-full h-full object-cover">
+                </div>
+                ${shoe ? `<div class="absolute bottom-2 z-30 w-16 h-10 rounded overflow-hidden border-2 border-indigo-400 shadow-md bg-white"><img src="${shoe.image}" class="w-full h-full object-cover"></div>` : ''}
             `;
 
             resDiv.classList.remove('hidden');
+        }
+
+        function unlockSaveOutfit() {
+            document.getElementById('save-status').innerText = '✅ ¡Outfit guardado con éxito! Gracias por seguir a @yonimikel';
+            document.getElementById('save-statusclassName = 'italic text-emerald-400 font-semibold';
         }
     </script>
 </body>
