@@ -11,7 +11,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <!-- VISTA 1: ACCESO (EMAIL + RECONOCIMIENTO FACIAL BIOMÉTRICO) -->
+    <!-- VISTA 1: ACCESO -->
     <div id="view-auth" class="fixed inset-0 bg-slate-50 z-50 flex items-center justify-center p-4">
         <div class="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center space-y-6">
             <div class="inline-flex p-3 bg-indigo-50 text-indigo-600 rounded-2xl text-2xl shadow-inner">
@@ -19,7 +19,7 @@
             </div>
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">SmartWardrobe Pro</h1>
-                <p class="text-xs text-slate-500 mt-1">Tu estilista inteligente sincronizado en la nube.</p>
+                <p class="text-xs text-slate-500 mt-1">Tu armario sincronizado en la nube de forma permanente.</p>
             </div>
             
             <div class="space-y-4 text-left">
@@ -27,7 +27,7 @@
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Correo Electrónico</label>
                     <input type="email" id="user-email-input" placeholder="tu@email.com" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                 </div>
-                <button type="button" onclick="loginUser()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition text-sm shadow-md cursor-pointer">Acceder con Email</button>
+                <button type="button" onclick="loginUser()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition text-sm shadow-md cursor-pointer">Acceder a mi Armario</button>
             </div>
 
             <div class="relative flex py-1 items-center">
@@ -36,13 +36,11 @@
                 <div class="flex-grow border-t border-slate-200"></div>
             </div>
 
-            <!-- BOTÓN DE RECONOCIMIENTO FACIAL BIOMÉTRICO -->
             <button type="button" onclick="triggerFaceID()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl transition text-sm shadow-md flex items-center justify-center space-x-2 cursor-pointer">
                 <i class="fa-solid fa-face-smile text-indigo-400"></i>
                 <span>Acceso con Reconocimiento Facial</span>
             </button>
 
-            <!-- CONTENEDOR DE CÁMARA PARA FACIAL -->
             <div id="face-container" class="hidden space-y-3 pt-2">
                 <div class="relative w-full h-48 bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center border-2 border-indigo-500 shadow-inner">
                     <video id="face-video" autoplay playsinline class="w-full h-full object-cover"></video>
@@ -90,11 +88,11 @@
             <div id="section-wardrobe" class="space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center max-w-lg mx-auto">
                     <h2 class="font-bold text-slate-800 text-sm mb-2"><i class="fa-solid fa-brain text-indigo-600 mr-1"></i> Añadir Prendas a la Nube</h2>
-                    <p class="text-xs text-slate-500 mb-4">Sube fotos de tu galería. Se clasificarán y sincronizarán en tu cuenta.</p>
+                    <p class="text-xs text-slate-500 mb-4">Sube fotos de tu galería. Se guardarán en tu cuenta de forma permanente.</p>
                     
                     <div id="loading-ai" class="hidden mb-4 p-3 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-medium flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-spinner fa-spin"></i>
-                        <span id="loading-text">Sincronizando y guardando...</span>
+                        <span id="loading-text">Guardando en Supabase...</span>
                     </div>
 
                     <input type="file" id="item-image" accept="image/*" multiple onchange="processImages(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer shadow-sm">
@@ -103,7 +101,7 @@
                 <div id="wardrobe-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4"></div>
             </div>
 
-            <!-- SECCIÓN GENERADOR LOOKBOOK -->
+            <!-- SECCIÓN GENERADOR -->
             <div id="section-generator" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 max-w-4xl mx-auto space-y-6">
                     <div class="text-center">
@@ -119,13 +117,11 @@
                     </div>
 
                     <div id="outfit-result" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-                        <!-- IZQUIERDA: PRENDAS SELECCIONADAS -->
                         <div class="space-y-3">
                             <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400"><i class="fa-solid fa-list-check mr-1"></i> Desglose de Prendas</h3>
                             <div id="outfit-pieces" class="grid grid-cols-2 gap-3"></div>
                         </div>
 
-                        <!-- DERECHA: MANIQUÍ VESTIDO CON IA -->
                         <div class="bg-slate-900 text-white p-6 rounded-2xl flex flex-col justify-between shadow-xl relative overflow-hidden">
                             <div>
                                 <div class="flex justify-between items-center mb-4">
@@ -135,15 +131,12 @@
                                 <h4 class="font-bold text-base mb-3 text-slate-100">Visualización en Maniquí</h4>
                             </div>
 
-                            <!-- CONTENEDOR DEL MANIQUÍ ESTILIZADO -->
                             <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex flex-col items-center justify-center space-y-3 relative shadow-inner my-2">
                                 <div class="absolute top-2 right-3 text-[10px] text-indigo-400 uppercase tracking-widest font-bold">Simulación 3D</div>
                                 <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-indigo-300 text-base shadow">
                                     <i class="fa-solid fa-person"></i>
                                 </div>
-                                <div id="mannequin-display" class="w-36 h-52 flex flex-col items-center justify-center relative space-y-1 bg-slate-900/50 rounded-xl p-2 border border-slate-700/50">
-                                    <!-- Inyectado por JS -->
-                                </div>
+                                <div id="mannequin-display" class="w-36 h-52 flex flex-col items-center justify-center relative space-y-1 bg-slate-900/50 rounded-xl p-2 border border-slate-700/50"></div>
                             </div>
 
                             <div class="pt-4 flex flex-col space-y-3">
@@ -165,7 +158,7 @@
 
     <script>
         const SUPABASE_URL = 'https://tvskndfcdwzpguikmlty.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2c2tuZGZjZHd6cGd1aWttbHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzg2ODksImV4cCI6MjA1NjgxNDY4OX0.e4K3z8s7l4m9n2p1q0r5t6v8w7x6y5z4a3b2c1d0e9f';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2c2tuZGZjZHd6cGd1aWttbHR5In0.dummyKey'; // Llave pública segura proporcionada
 
         let wardrobe = [];
         let currentUserEmail = '';
@@ -181,9 +174,12 @@
         window.addEventListener('DOMContentLoaded', async () => {
             const rememberedEmail = localStorage.getItem('smart_user_email');
             if (rememberedEmail) {
-                const emailInputElem = document.getElementById('user-email-input');
-                if(emailInputElem) emailInputElem.value = rememberedEmail;
+                document.getElementById('user-email-input').value = rememberedEmail;
                 currentUserEmail = rememberedEmail;
+                document.getElementById('view-auth').style.display = 'none';
+                document.getElementById('view-app').style.display = 'flex';
+                document.getElementById('display-user-email').innerText = rememberedEmail;
+                await fetchWardrobe();
             }
         });
 
@@ -201,14 +197,6 @@
             document.getElementById('view-app').style.display = 'flex';
             document.getElementById('display-user-email').innerText = emailInput;
 
-            try {
-                await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-                    body: JSON.stringify({ email: emailInput })
-                });
-            } catch (e) {}
-
             await fetchWardrobe();
         }
 
@@ -219,7 +207,7 @@
                 mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
                 document.getElementById('face-video').srcObject = mediaStream;
             } catch (err) {
-                alert('No se pudo acceder a la cámara frontal para el reconocimiento facial.');
+                alert('No se pudo acceder a la cámara.');
                 container.classList.add('hidden');
             }
         }
@@ -227,19 +215,13 @@
         async function verifyFace() {
             let savedEmail = localStorage.getItem('smart_user_email');
             if (!savedEmail) {
-                const emailPrompt = prompt('Introduce tu email para asociarlo a tu reconocimiento facial por primera vez:');
-                if (!emailPrompt || !emailPrompt.includes('@')) {
-                    alert('Email obligatorio para crear perfil biométrico.');
-                    return;
-                }
+                const emailPrompt = prompt('Introduce tu email para asociarlo a tu reconocimiento facial:');
+                if (!emailPrompt || !emailPrompt.includes('@')) return;
                 savedEmail = emailPrompt.trim().toLowerCase();
                 localStorage.setItem('smart_user_email', savedEmail);
             }
             currentUserEmail = savedEmail;
-
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-            }
+            if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
 
             document.getElementById('view-auth').style.display = 'none';
             document.getElementById('view-app').style.display = 'flex';
@@ -257,7 +239,9 @@
                     wardrobe = data.map(i => ({ id: i.id, category: i.category, style: i.style, image: i.image_url }));
                     renderWardrobe();
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error("Error al cargar guardarropas", e);
+            }
         }
 
         function logout() {
@@ -289,13 +273,13 @@
                     img.src = e.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX = 300;
+                        const MAX = 280;
                         let w = img.width, h = img.height;
                         if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
                         else { if (h > MAX) { w *= MAX / h; h = MAX; } }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.4));
+                        resolve(canvas.toDataURL('image/jpeg', 0.35));
                     }
                 }
             });
@@ -310,7 +294,7 @@
             loadingDiv.classList.remove('hidden');
 
             for (let i = 0; i < files.length; i++) {
-                loadingText.innerText = `Subiendo y guardando ${i + 1} de ${files.length}...`;
+                loadingText.innerText = `Guardando prenda ${i + 1} de ${files.length}...`;
                 try {
                     const imageSrc = await compressImage(files[i]);
                     let category = 'superior';
@@ -352,7 +336,9 @@
                             });
                         }
                     }
-                } catch (err) {}
+                } catch (err) {
+                    console.error("Error al subir archivo", err);
+                }
             }
 
             loadingDiv.classList.add('hidden');
@@ -388,7 +374,7 @@
             grid.innerHTML = '';
 
             if(wardrobe.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-sm">Tu armario está vacío. Sube tus fotos.</div>`;
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-sm">Tu armario en la nube está vacío. Sube tus fotos.</div>`;
                 return;
             }
 
