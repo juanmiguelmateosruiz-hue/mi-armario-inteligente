@@ -56,7 +56,7 @@
             <div id="section-wardrobe" class="space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center max-w-lg mx-auto">
                     <h2 class="font-bold text-slate-800 text-sm mb-2"><i class="fa-solid fa-brain text-indigo-600 mr-1"></i> Añadir Prendas</h2>
-                    <p class="text-xs text-slate-500 mb-4">Sube fotos de golpe. Se guardarán en tu cuenta.</p>
+                    <p class="text-xs text-slate-500 mb-4">Sube fotos de golpe. Se guardarán en tu cuenta de forma síncrona.</p>
                     
                     <div id="loading-ai" class="hidden mb-4 p-3 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-medium flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-spinner fa-spin"></i>
@@ -203,13 +203,13 @@
                     img.src = e.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX = 300;
+                        const MAX = 250; // Resolución optimizada para evitar sobrecarga en Supabase
                         let w = img.width, h = img.height;
                         if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
                         else { if (h > MAX) { w *= MAX / h; h = MAX; } }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.4));
+                        resolve(canvas.toDataURL('image/jpeg', 0.35));
                     }
                 }
             });
@@ -243,6 +243,7 @@
                         } catch (err) {}
                     }
 
+                    // Petición directa y limpia a Supabase
                     const res = await fetch(`${SUPABASE_URL}/rest/v1/prendas`, {
                         method: 'POST',
                         headers: {
@@ -251,17 +252,26 @@
                             'Content-Type': 'application/json',
                             'Prefer': 'return=representation'
                         },
-                        body: JSON.stringify({ email: currentUserEmail, category, style, image_url: imageSrc })
+                        body: JSON.stringify({ email: currentUserEmail, category: category, style: style, image_url: imageSrc })
                     });
 
                     if (res.ok) {
                         const data = await res.json();
                         const saved = Array.isArray(data) ? data[0] : data;
-                        if (saved && saved.id) {
-                            wardrobe.push({ id: saved.id, category: saved.category, style: saved.style, image: saved.image_url });
+                        if (saved) {
+                            wardrobe.push({ 
+                                id: saved.id || Date.now() + Math.random(), 
+                                category: saved.category || category, 
+                                style: saved.style || style, 
+                                image: saved.image_url || imageSrc 
+                            });
                         }
+                    } else {
+                        console.error("Error al guardar en Supabase:", await res.text());
                     }
-                } catch (err) {}
+                } catch (err) {
+                    console.error("Excepción en archivo:", err);
+                }
             }
 
             loadingDiv.classList.add('hidden');
