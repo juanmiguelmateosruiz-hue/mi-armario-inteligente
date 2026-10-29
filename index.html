@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartWardrobe - Tu Estilista IA Pro</title>
+    <title>SmartWardrobe Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
@@ -11,7 +11,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <!-- VISTA 1: ACCESO POR EMAIL (MULTI-DISPOSITIVO) -->
+    <!-- ACCESO -->
     <div id="view-auth" class="fixed inset-0 bg-slate-50 z-50 flex items-center justify-center p-4">
         <div class="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center space-y-6">
             <div class="inline-flex p-3 bg-indigo-50 text-indigo-600 rounded-2xl text-2xl">
@@ -19,22 +19,19 @@
             </div>
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">SmartWardrobe Pro</h1>
-                <p class="text-xs text-slate-500 mt-1">Inicia sesión con tu email para acceder a tu armario sincronizado en la nube desde cualquier dispositivo.</p>
+                <p class="text-xs text-slate-500 mt-1">Introduce tu email para acceder a tu armario en la nube.</p>
             </div>
             <div class="space-y-4 text-left">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Correo Electrónico</label>
                     <input type="email" id="user-email-input" placeholder="tu@email.com" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                 </div>
-                <button type="button" onclick="loginUser()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition text-sm shadow-sm cursor-pointer">Acceder a mi Armario</button>
-            </div>
-            <div class="text-[11px] text-slate-400">
-                Sincronización en tiempo real con Supabase.
+                <button type="button" onclick="loginUser()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition text-sm shadow-sm cursor-pointer">Acceder</button>
             </div>
         </div>
     </div>
 
-    <!-- VISTA 2: APLICACIÓN PRINCIPAL -->
+    <!-- APLICACIÓN -->
     <div id="view-app" class="hidden min-h-screen flex flex-col">
         <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
             <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
@@ -44,7 +41,7 @@
                 </div>
                 <div class="flex items-center space-x-3">
                     <span id="display-user-email" class="text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full font-medium"></span>
-                    <button onclick="logout()" class="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1" title="Cerrar sesión"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    <button onclick="logout()" class="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1"><i class="fa-solid fa-right-from-bracket"></i></button>
                 </div>
             </div>
         </header>
@@ -52,53 +49,45 @@
         <main class="flex-grow max-w-5xl w-full mx-auto p-4 space-y-6">
             <div class="flex border-b border-slate-200 bg-white rounded-2xl shadow-sm px-4 pt-2">
                 <button onclick="switchTab('wardrobe')" id="tab-wardrobe" class="flex-1 py-3 text-sm font-semibold text-indigo-600 border-b-2 border-indigo-600 transition"><i class="fa-solid fa-vest mr-2"></i> Mi Armario (<span id="count-items">0</span>)</button>
-                <button onclick="switchTab('generator')" id="tab-generator" class="flex-1 py-3 text-sm font-semibold text-slate-400 hover:text-slate-600 transition"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Generador Pro (Lookbook)</button>
+                <button onclick="switchTab('generator')" id="tab-generator" class="flex-1 py-3 text-sm font-semibold text-slate-400 hover:text-slate-600 transition"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Generador Pro</button>
             </div>
 
-            <!-- SECCIÓN ARMARIO -->
+            <!-- ARMARIO -->
             <div id="section-wardrobe" class="space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center max-w-lg mx-auto">
-                    <h2 class="font-bold text-slate-800 text-sm mb-2"><i class="fa-solid fa-brain text-indigo-600 mr-1"></i> Subida Inteligente en Lote</h2>
-                    <p class="text-xs text-slate-500 mb-4">Selecciona varias fotos de tu galería. La IA las clasificará y guardará directamente en tu cuenta en la nube.</p>
+                    <h2 class="font-bold text-slate-800 text-sm mb-2"><i class="fa-solid fa-brain text-indigo-600 mr-1"></i> Añadir Prendas</h2>
+                    <p class="text-xs text-slate-500 mb-4">Sube fotos de golpe. Se guardarán en tu cuenta.</p>
                     
                     <div id="loading-ai" class="hidden mb-4 p-3 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-medium flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-spinner fa-spin"></i>
-                        <span id="loading-text">Procesando prendas...</span>
+                        <span id="loading-text">Subiendo prendas...</span>
                     </div>
 
-                    <input type="file" id="item-image" accept="image/*" multiple onchange="processImagesWithAI(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                    <input type="file" id="item-image" accept="image/*" multiple onchange="processImages(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
                 </div>
 
                 <div id="wardrobe-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4"></div>
             </div>
 
-            <!-- SECCIÓN GENERADOR OUTFIT LOOKBOOK / MANIQUI -->
+            <!-- GENERADOR LOOKBOOK -->
             <div id="section-generator" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 max-w-4xl mx-auto space-y-6">
                     <div class="text-center">
                         <h2 class="font-bold text-slate-800 text-lg mb-1">Generador de Estilismo Profesional</h2>
-                        <p class="text-xs text-slate-500 mb-4">Elige una ocasión y la IA estructurará tu conjunto combinando tu armario.</p>
-                        
-                        <div class="flex justify-center gap-2 flex-wrap">
-                            <button onclick="generateOutfit('casual')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">Casual</button>
-                            <button onclick="generateOutfit('formal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">Formal</button>
-                            <button onclick="generateOutfit('sport')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">Sport</button>
-                            <button onclick="generateOutfit('fiesta')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">Fiesta</button>
+                        <div class="flex justify-center gap-2 flex-wrap mt-4">
+                            <button onclick="generateOutfit('casual')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700">Casual</button>
+                            <button onclick="generateOutfit('formal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700">Formal</button>
+                            <button onclick="generateOutfit('sport')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700">Sport</button>
+                            <button onclick="generateOutfit('fiesta')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700">Fiesta</button>
                         </div>
                     </div>
 
                     <div id="outfit-result" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-                        <!-- COLUMNA IZQUIERDA: PRENDAS SELECCIONADAS -->
                         <div class="space-y-3">
-                            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400"><i class="fa-solid fa-list-check mr-1"></i> Desglose de Prendas</h3>
+                            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400">Desglose de Prendas</h3>
                             <div id="outfit-pieces" class="grid grid-cols-2 gap-3"></div>
                         </div>
-
-                        <!-- COLUMNA DERECHA: MANIQUI / LOOKBOOK PROFESIONAL -->
-                        <div class="bg-slate-900 text-white p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden shadow-lg">
-                            <div class="absolute -right-6 -bottom-6 text-slate-800 opacity-20 text-8xl pointer-events-none">
-                                <i class="fa-solid fa-shirt"></i>
-                            </div>
+                        <div class="bg-slate-900 text-white p-6 rounded-2xl flex flex-col justify-between shadow-lg">
                             <div>
                                 <div class="flex justify-between items-center mb-4">
                                     <span class="text-[10px] uppercase tracking-widest bg-indigo-600 px-2.5 py-1 rounded-full font-semibold">Lookbook IA</span>
@@ -106,21 +95,15 @@
                                 </div>
                                 <h4 class="font-bold text-base mb-4 text-slate-100">Maniquí Coordinado</h4>
                             </div>
-
-                            <!-- MOCKUP PROFESIONAL DE MANIQUI VESTIDO -->
-                            <div class="bg-slate-800/80 backdrop-blur border border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center space-y-3 my-2">
-                                <div class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-indigo-400 text-lg shadow-inner">
+                            <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center space-y-3 my-2">
+                                <div class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-indigo-400 text-lg">
                                     <i class="fa-solid fa-user-tie"></i>
                                 </div>
-                                <div class="w-full grid grid-cols-3 gap-2 text-center" id="mannequin-grid">
-                                    <!-- Inyectado dinámicamente -->
-                                </div>
-                                <div class="text-[11px] text-slate-400 italic text-center">Outfit optimizado y validado para tu silueta</div>
+                                <div class="w-full grid grid-cols-3 gap-2 text-center" id="mannequin-grid"></div>
                             </div>
-
                             <div class="pt-4 flex justify-between items-center">
                                 <span class="text-[11px] text-slate-400">SmartWardrobe Studio</span>
-                                <button onclick="generateOutfit(currentOccasion)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shadow">Generar Otro Look</button>
+                                <button onclick="generateOutfit(currentOccasion)" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-semibold">Generar Otro</button>
                             </div>
                         </div>
                     </div>
@@ -139,11 +122,7 @@
         let aiModel = null;
 
         async function loadAI() {
-            try {
-                aiModel = await mobilenet.load();
-            } catch (e) {
-                console.error("Error cargando modelo IA", e);
-            }
+            try { aiModel = await mobilenet.load(); } catch (e) {}
         }
         loadAI();
 
@@ -154,16 +133,15 @@
                 document.getElementById('view-auth').style.display = 'none';
                 document.getElementById('view-app').style.display = 'flex';
                 document.getElementById('display-user-email').innerText = savedEmail;
-                await fetchWardrobeFromCloud();
+                await fetchWardrobe();
             }
         });
 
         async function loginUser() {
             const input = document.getElementById('user-email-input');
             const emailInput = input ? input.value.trim().toLowerCase() : '';
-            
             if(!emailInput || !emailInput.includes('@')) {
-                alert('Por favor, introduce un email válido.');
+                alert('Introduce un email válido.');
                 return;
             }
 
@@ -176,43 +154,25 @@
             try {
                 await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
                     method: 'POST',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'resolution=merge-duplicates'
-                    },
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
                     body: JSON.stringify({ email: emailInput })
                 });
-            } catch (e) {
-                console.error("Error registrando usuario", e);
-            }
+            } catch (e) {}
 
-            await fetchWardrobeFromCloud();
+            await fetchWardrobe();
         }
 
-        async function fetchWardrobeFromCloud() {
+        async function fetchWardrobe() {
             try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/prendas?email=eq.${encodeURIComponent(currentUserEmail)}`, {
-                    method: 'GET',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    }
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/prendas?email=eq.${encodeURIComponent(currentUserEmail)}`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
                 });
-                if (response.ok) {
-                    const data = await response.json();
-                    wardrobe = data.map(item => ({
-                        id: item.id,
-                        category: item.category,
-                        style: item.style,
-                        image: item.image_url
-                    }));
+                if (res.ok) {
+                    const data = await res.json();
+                    wardrobe = data.map(i => ({ id: i.id, category: i.category, style: i.style, image: i.image_url }));
                     renderWardrobe();
                 }
-            } catch (e) {
-                console.error("Error cargando armario de la nube", e);
-            }
+            } catch (e) {}
         }
 
         function logout() {
@@ -238,40 +198,24 @@
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = function(event) {
+                reader.onload = function(e) {
                     const img = new Image();
-                    img.src = event.target.result;
+                    img.src = e.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 350;
-                        const MAX_HEIGHT = 350;
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        resolve(canvas.toDataURL('image/jpeg', 0.45));
+                        const MAX = 300;
+                        let w = img.width, h = img.height;
+                        if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
+                        else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.4));
                     }
                 }
             });
         }
 
-        async function processImagesWithAI(e) {
+        async function processImages(e) {
             const files = e.target.files;
             if(!files || files.length === 0) return;
 
@@ -280,7 +224,7 @@
             loadingDiv.classList.remove('hidden');
 
             for (let i = 0; i < files.length; i++) {
-                loadingText.innerText = `Subiendo y analizando prenda ${i + 1} de ${files.length}...`;
+                loadingText.innerText = `Subiendo ${i + 1} de ${files.length}...`;
                 try {
                     const imageSrc = await compressImage(files[i]);
                     let category = 'superior';
@@ -288,39 +232,16 @@
 
                     if (aiModel) {
                         try {
-                            const imgElement = new Image();
-                            imgElement.src = imageSrc;
-                            await new Promise((res) => { imgElement.onload = res; });
-                            
-                            const predictions = await aiModel.classify(imgElement);
-                            const textPred = predictions.map(p => p.className.toLowerCase()).join(' ');
-
-                            if (textPred.includes('shoe') || textPred.includes('boot') || textPred.includes('sandal') || textPred.includes('sneaker') || textPred.includes('footwear') || textPred.includes('oxford')) {
-                                category = 'calzado';
-                            } else if (textPred.includes('jean') || textPred.includes('trousers') || textPred.includes('shorts') || textPred.includes('skirt') || textPred.includes('pant') || textPred.includes('slacks')) {
-                                category = 'inferior';
-                            } else if (textPred.includes('tie') || textPred.includes('bow tie') || textPred.includes('belt') || textPred.includes('scarf') || textPred.includes('necklace') || textPred.includes('sunglasses') || textPred.includes('hat')) {
-                                category = 'accesorio';
-                            } else if (textPred.includes('jacket') || textPred.includes('coat') || textPred.includes('cardigan') || textPred.includes('suit') || textPred.includes('blazer') || textPred.includes('jersey') || textPred.includes('shirt') || textPred.includes('t-shirt') || textPred.includes('blouse') || textPred.includes('top') || textPred.includes('sweater')) {
-                                category = 'superior';
-                            }
-
-                            if (textPred.includes('evening') || textPred.includes('cocktail') || textPred.includes('suit') || textPred.includes('tie')) {
-                                style = 'formal';
-                            } else if (textPred.includes('sport') || textPred.includes('jersey') || textPred.includes('running') || textPred.includes('sneaker')) {
-                                style = 'sport';
-                            }
-                        } catch (aiErr) {
-                            console.warn("Fallo menor en IA, asignando por defecto:", aiErr);
-                        }
+                            const img = new Image();
+                            img.src = imageSrc;
+                            await new Promise((res) => { img.onload = res; });
+                            const preds = await aiModel.classify(img);
+                            const text = preds.map(p => p.className.toLowerCase()).join(' ');
+                            if (text.includes('shoe') || text.includes('boot') || text.includes('sneaker')) category = 'calzado';
+                            else if (text.includes('jean') || text.includes('pant') || text.includes('shorts')) category = 'inferior';
+                            else if (text.includes('tie') || text.includes('belt') || text.includes('hat')) category = 'accesorio';
+                        } catch (err) {}
                     }
-
-                    const newItem = {
-                        email: currentUserEmail,
-                        category: category,
-                        style: style,
-                        image_url: imageSrc
-                    };
 
                     const res = await fetch(`${SUPABASE_URL}/rest/v1/prendas`, {
                         method: 'POST',
@@ -330,27 +251,17 @@
                             'Content-Type': 'application/json',
                             'Prefer': 'return=representation'
                         },
-                        body: JSON.stringify(newItem)
+                        body: JSON.stringify({ email: currentUserEmail, category, style, image_url: imageSrc })
                     });
 
                     if (res.ok) {
-                        const savedData = await res.json();
-                        // Aseguramos que añadimos el elemento con el ID devuelto por Supabase
-                        const savedItem = Array.isArray(savedData) ? savedData[0] : savedData;
-                        if (savedItem && savedItem.id) {
-                            wardrobe.push({
-                                id: savedItem.id,
-                                category: savedItem.category,
-                                style: savedItem.style,
-                                image: savedItem.image_url
-                            });
+                        const data = await res.json();
+                        const saved = Array.isArray(data) ? data[0] : data;
+                        if (saved && saved.id) {
+                            wardrobe.push({ id: saved.id, category: saved.category, style: saved.style, image: saved.image_url });
                         }
-                    } else {
-                        console.error("Error de servidor Supabase:", await res.text());
                     }
-                } catch (err) {
-                    console.error("Error crítico procesando archivo individual", err);
-                }
+                } catch (err) {}
             }
 
             loadingDiv.classList.add('hidden');
@@ -358,42 +269,26 @@
             renderWardrobe();
         }
 
-        async function updateCategory(id, newCategory) {
+        async function updateCategory(id, newCat) {
             const item = wardrobe.find(i => i.id == id);
             if(item) {
-                item.category = newCategory;
+                item.category = newCat;
                 renderWardrobe();
-                try {
-                    await fetch(`${SUPABASE_URL}/rest/v1/prendas?id=eq.${id}`, {
-                        method: 'PATCH',
-                        headers: {
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ category: newCategory })
-                    });
-                } catch(e) {
-                    console.error("Error actualizando categoría", e);
-                }
+                await fetch(`${SUPABASE_URL}/rest/v1/prendas?id=eq.${id}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: newCat })
+                });
             }
         }
 
         async function deleteItem(id) {
-            wardrobe = wardrobe.filter(item => item.id !== id);
+            wardrobe = wardrobe.filter(i => i.id !== id);
             renderWardrobe();
-
-            try {
-                await fetch(`${SUPABASE_URL}/rest/v1/prendas?id=eq.${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    }
-                });
-            } catch (err) {
-                console.error("Error borrando de la nube", err);
-            }
+            await fetch(`${SUPABASE_URL}/rest/v1/prendas?id=eq.${id}`, {
+                method: 'DELETE',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+            });
         }
 
         function renderWardrobe() {
@@ -402,7 +297,7 @@
             grid.innerHTML = '';
 
             if(wardrobe.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-sm">Tu armario en la nube está vacío. Sube varias fotos a la vez y se sincronizarán solas.</div>`;
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-sm">Tu armario está vacío. Sube tus fotos.</div>`;
                 return;
             }
 
@@ -410,16 +305,13 @@
                 grid.innerHTML += `
                     <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm relative group space-y-2">
                         <img src="${item.image}" class="w-full h-32 object-cover rounded-lg">
-                        <div class="flex flex-col gap-1 text-xs">
-                            <select onchange="updateCategory('${item.id}', this.value)" class="w-full bg-slate-100 text-indigo-600 font-semibold py-1 px-2 rounded border border-slate-200 capitalize cursor-pointer">
-                                <option value="superior" ${item.category === 'superior' ? 'selected' : ''}>Superior</option>
-                                <option value="inferior" ${item.category === 'inferior' ? 'selected' : ''}>Inferior</option>
-                                <option value="calzado" ${item.category === 'calzado' ? 'selected' : ''}>Calzado</option>
-                                <option value="accesorio" ${item.category === 'accesorio' ? 'selected' : ''}>Accesorio</option>
-                            </select>
-                            <span class="bg-slate-50 text-slate-500 px-1.5 py-0.5 rounded text-[10px] capitalize text-center border border-slate-100">Estilo: ${item.style}</span>
-                        </div>
-                        <button onclick="deleteItem('${item.id}')" class="absolute top-3 right-3 bg-white/80 hover:bg-red-600 hover:text-white text-slate-600 w-7 h-7 rounded-full flex items-center justify-center text-xs shadow transition"><i class="fa-solid fa-trash"></i></button>
+                        <select onchange="updateCategory('${item.id}', this.value)" class="w-full bg-slate-100 text-indigo-600 font-semibold py-1 px-2 rounded border text-xs capitalize cursor-pointer">
+                            <option value="superior" ${item.category === 'superior' ? 'selected' : ''}>Superior</option>
+                            <option value="inferior" ${item.category === 'inferior' ? 'selected' : ''}>Inferior</option>
+                            <option value="calzado" ${item.category === 'calzado' ? 'selected' : ''}>Calzado</option>
+                            <option value="accesorio" ${item.category === 'accesorio' ? 'selected' : ''}>Accesorio</option>
+                        </select>
+                        <button onclick="deleteItem('${item.id}')" class="absolute top-3 right-3 bg-white/80 hover:bg-red-600 hover:text-white text-slate-600 w-7 h-7 rounded-full flex items-center justify-center text-xs shadow"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
             });
@@ -428,87 +320,41 @@
         function generateOutfit(occasion) {
             currentOccasion = occasion;
             document.getElementById('lookbook-occasion').innerText = `Estilo ${occasion}`;
-
-            const superiors = wardrobe.filter(i => i.category === 'superior');
-            const inferiors = wardrobe.filter(i => i.category === 'inferior');
+            const supers = wardrobe.filter(i => i.category === 'superior');
+            const infs = wardrobe.filter(i => i.category === 'inferior');
             const shoes = wardrobe.filter(i => i.category === 'calzado');
-            const accessories = wardrobe.filter(i => i.category === 'accesorio');
+            const accs = wardrobe.filter(i => i.category === 'accesorio');
 
-            const resultDiv = document.getElementById('outfit-result');
-            const piecesDiv = document.getElementById('outfit-pieces');
-            const mannequinGrid = document.getElementById('mannequin-grid');
-            
-            piecesDiv.innerHTML = '';
-            mannequinGrid.innerHTML = '';
+            const resDiv = document.getElementById('outfit-result');
+            const pieces = document.getElementById('outfit-pieces');
+            const manq = document.getElementById('mannequin-grid');
+            pieces.innerHTML = ''; manq.innerHTML = '';
 
-            if(superiors.length === 0 || inferiors.length === 0) {
-                resultDiv.classList.remove('hidden');
-                piecesDiv.innerHTML = `<div class="col-span-full text-xs text-red-500 font-medium">Necesitas al menos una prenda superior y una inferior en tu armario.</div>`;
-                mannequinGrid.innerHTML = `<div class="col-span-3 text-xs text-slate-400 py-4">Faltan prendas básicas.</div>`;
+            if(supers.length === 0 || infs.length === 0) {
+                resDiv.classList.remove('hidden');
+                pieces.innerHTML = `<div class="col-span-full text-xs text-red-500">Añade al menos una prenda superior e inferior.</div>`;
                 return;
             }
 
-            const resultSup = superiors[Math.floor(Math.random() * superiors.length)];
-            const resultInf = inferiors[Math.floor(Math.random() * inferiors.length)];
-            const resultShoe = shoes.length > 0 ? shoes[Math.floor(Math.random() * shoes.length)] : null;
-            const resultAcc = accessories.length > 0 ? accessories[Math.floor(Math.random() * accessories.length)] : null;
+            const sup = supers[Math.floor(Math.random() * supers.length)];
+            const inf = infs[Math.floor(Math.random() * infs.length)];
+            const shoe = shoes.length > 0 ? shoes[Math.floor(Math.random() * shoes.length)] : null;
+            const acc = accs.length > 0 ? accs[Math.floor(Math.random() * accs.length)] : null;
 
-            let piecesHtml = `
-                <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 text-center">
-                    <img src="${resultSup.image}" class="w-full h-20 object-cover rounded-lg mb-1">
-                    <span class="text-[10px] font-bold text-indigo-600 uppercase">Superior</span>
-                </div>
-                <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 text-center">
-                    <img src="${resultInf.image}" class="w-full h-20 object-cover rounded-lg mb-1">
-                    <span class="text-[10px] font-bold text-indigo-600 uppercase">Inferior</span>
-                </div>
+            pieces.innerHTML = `
+                <div class="bg-slate-50 p-2 rounded-xl text-center"><img src="${sup.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Superior</span></div>
+                <div class="bg-slate-50 p-2 rounded-xl text-center"><img src="${inf.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Inferior</span></div>
+                ${shoe ? `<div class="bg-slate-50 p-2 rounded-xl text-center"><img src="${shoe.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Calzado</span></div>` : ''}
+                ${acc ? `<div class="bg-slate-50 p-2 rounded-xl text-center"><img src="${acc.image}" class="w-full h-20 object-cover rounded mb-1"><span class="text-[10px] font-bold text-indigo-600">Accesorio</span></div>` : ''}
             `;
-            if(resultShoe) {
-                piecesHtml += `
-                    <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 text-center">
-                        <img src="${resultShoe.image}" class="w-full h-20 object-cover rounded-lg mb-1">
-                        <span class="text-[10px] font-bold text-indigo-600 uppercase">Calzado</span>
-                    </div>
-                `;
-            }
-            if(resultAcc) {
-                piecesHtml += `
-                    <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 text-center">
-                        <img src="${resultAcc.image}" class="w-full h-20 object-cover rounded-lg mb-1">
-                        <span class="text-[10px] font-bold text-indigo-600 uppercase">Accesorio</span>
-                    </div>
-                `;
-            }
-            piecesDiv.innerHTML = piecesHtml;
 
-            let mannequinHtml = `
-                <div class="bg-slate-900 p-1.5 rounded-lg border border-slate-700 text-center">
-                    <img src="${resultSup.image}" class="w-full h-16 object-cover rounded">
-                    <span class="text-[9px] text-slate-300 block mt-1">Cuerpo</span>
-                </div>
-                <div class="bg-slate-900 p-1.5 rounded-lg border border-slate-700 text-center">
-                    <img src="${resultInf.image}" class="w-full h-16 object-cover rounded">
-                    <span class="text-[9px] text-slate-300 block mt-1">Piernas</span>
-                </div>
+            manq.innerHTML = `
+                <div class="bg-slate-900 p-1.5 rounded border border-slate-700 text-center"><img src="${sup.image}" class="w-full h-16 object-cover rounded"><span class="text-[9px] text-slate-300">Cuerpo</span></div>
+                <div class="bg-slate-900 p-1.5 rounded border border-slate-700 text-center"><img src="${inf.image}" class="w-full h-16 object-cover rounded"><span class="text-[9px] text-slate-300">Piernas</span></div>
+                ${shoe ? `<div class="bg-slate-900 p-1.5 rounded border border-slate-700 text-center"><img src="${shoe.image}" class="w-full h-16 object-cover rounded"><span class="text-[9px] text-slate-300">Pies</span></div>` : ''}
             `;
-            if(resultShoe) {
-                mannequinHtml += `
-                    <div class="bg-slate-900 p-1.5 rounded-lg border border-slate-700 text-center">
-                        <img src="${resultShoe.image}" class="w-full h-16 object-cover rounded">
-                        <span class="text-[9px] text-slate-300 block mt-1">Pies</span>
-                    </div>
-                `;
-            } else if(resultAcc) {
-                mannequinHtml += `
-                    <div class="bg-slate-900 p-1.5 rounded-lg border border-slate-700 text-center">
-                        <img src="${resultAcc.image}" class="w-full h-16 object-cover rounded">
-                        <span class="text-[9px] text-slate-300 block mt-1">Extra</span>
-                    </div>
-                `;
-            }
-            mannequinGrid.innerHTML = mannequinHtml;
 
-            resultDiv.classList.remove('hidden');
+            resDiv.classList.remove('hidden');
         }
     </script>
 </body>
